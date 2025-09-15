@@ -10,16 +10,17 @@ import { defineConfig } from 'rollup';
 
 const production = !process.env.ROLLUP_WATCH;
 
+// Helpers
+const jsOut = (name) => production ? `static/dist/${name}.min.js` : `static/dist/${name}.js`;
+const cssOut = (name) => production ? `${name}.min.css` : `${name}.css`;
+
 const Vendor = {
   input: 'src/entries/vendor.js',
   output: {
     sourcemap: true,
     format: 'iife',
     name: 'vendor',
-    file: production ? 'static/dist/vendor.min.js' : 'static/dist/vendor.js',
-    globals: {
-      'bootstrap': 'bootstrap'
-    }
+    file: jsOut('vendor')
   },
   plugins: [
     svelte({
@@ -29,7 +30,7 @@ const Vendor = {
     }),
 
     postcss({
-      extract: 'vendor.min.css',
+      extract: cssOut('vendor'),
       minimize: production,
       sourceMap: !production,
       plugins: [
@@ -70,7 +71,7 @@ const Vendor = {
 const App = {
   input: 'src/entries/app.js',
   output: {
-    file: 'static/dist/app.min.js',
+    file: jsOut('app'),
     format: 'iife',
     sourcemap: !production
   },
@@ -82,7 +83,7 @@ const App = {
     }),
 
     postcss({
-      extract: 'app.min.css',
+      extract: cssOut('app'),
       minimize: production,
       sourceMap: !production,
       plugins: [
