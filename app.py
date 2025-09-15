@@ -1,8 +1,8 @@
 from flask import Flask
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
-@app.route('/')
+@app.route('/hola')
 def inicio():
   return '¡Hola, Flask en Ubuntu!'
 
