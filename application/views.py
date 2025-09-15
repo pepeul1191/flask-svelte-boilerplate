@@ -6,7 +6,7 @@
 from flask import Blueprint, render_template
 
 view = Blueprint(
-  'admin-view-user', 
+  'application-views', 
   __name__
 )
 

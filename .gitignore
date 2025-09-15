@@ -83,3 +83,4 @@ venv/
 
 .DS_Store
 flask_session
+fonts

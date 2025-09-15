@@ -3,8 +3,10 @@
 
 # application/urls.py
 
-from .views import view as view_home
+from .views import view as applications_views
+from .apis import api as application_apis
 
 blueprints = [
-  view_home,
+  application_apis,
+  applications_views,
 ]

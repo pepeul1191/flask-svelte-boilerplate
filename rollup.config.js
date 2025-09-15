@@ -1,41 +1,25 @@
-import { spawn } from 'child_process';
 import svelte from 'rollup-plugin-svelte';
 import commonjs from '@rollup/plugin-commonjs';
-import terser from '@rollup/plugin-terser'; 
+import terser from '@rollup/plugin-terser';
 import resolve from '@rollup/plugin-node-resolve';
-import livereload from 'rollup-plugin-livereload';
-import css from 'rollup-plugin-css-only';
+import postcss from 'rollup-plugin-postcss';
+import postcssImport from 'postcss-import';
+import autoprefixer from 'autoprefixer';
+import copy from 'rollup-plugin-copy';
+import { defineConfig } from 'rollup';
 
 const production = !process.env.ROLLUP_WATCH;
 
-function serve() {
-  let server;
-
-  function toExit() {
-    if (server) server.kill(0);
-  }
-
-  return {
-    writeBundle() {
-      if (server) return;
-      server = spawn('npm', ['run', 'start', '--', '--dev'], {
-        stdio: ['ignore', 'inherit', 'inherit'],
-        shell: true
-      });
-
-      process.on('SIGTERM', toExit);
-      process.on('exit', toExit);
-    }
-  };
-}
-
-export default {
-  input: 'src/main.js',
+const Vendor = {
+  input: 'src/entries/vendor.js',
   output: {
     sourcemap: true,
     format: 'iife',
-    name: 'app',
-    file: 'static/build/bundle.js'
+    name: 'vendor',
+    file: production ? 'static/dist/vendor.min.js' : 'static/dist/vendor.js',
+    globals: {
+      'bootstrap': 'bootstrap'
+    }
   },
   plugins: [
     svelte({
@@ -43,18 +27,88 @@ export default {
         dev: !production
       }
     }),
-    css({ output: 'bundle.css' }),
+
+    postcss({
+      extract: 'vendor.min.css',
+      minimize: production,
+      sourceMap: !production,
+      plugins: [
+        postcssImport(),
+        autoprefixer()
+      ]
+    }),
+
     resolve({
       browser: true,
       dedupe: ['svelte'],
       exportConditions: ['svelte']
     }),
+
     commonjs(),
-    //!production && serve(),
-    //!production && livereload('static'),
-    production && terser()
+
+    production && terser(),
+
+    copy({
+      hook: 'writeBundle',
+      targets: [
+        {
+          src: 'node_modules/font-awesome/fonts/*',
+          dest: 'static/fonts/'
+        },
+        {
+          src: 'node_modules/simplemde/dist/*',
+          dest: 'static/dist/'
+        }
+      ]
+    })
   ],
   watch: {
     clearScreen: false
   }
 };
+
+const App = {
+  input: 'src/entries/app.js',
+  output: {
+    file: 'static/dist/app.min.js',
+    format: 'iife',
+    sourcemap: !production
+  },
+  plugins: [
+    svelte({
+      compilerOptions: {
+        dev: !production
+      }
+    }),
+
+    postcss({
+      extract: 'app.min.css',
+      minimize: production,
+      sourceMap: !production,
+      plugins: [
+        postcssImport(),
+        autoprefixer()
+      ]
+    }),
+
+    resolve({
+      browser: true,
+      dedupe: ['svelte']
+    }),
+
+    commonjs(),
+
+    production && terser(),
+
+    copy({
+      targets: [
+        { src: 'src/assets/*', dest: 'static/dist/assets' }
+      ]
+    })
+  ],
+  watch: {
+    clearScreen: false
+  }
+};
+
+export default defineConfig([App, Vendor]);
